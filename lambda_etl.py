@@ -33,8 +33,10 @@ logger.info("S3 connection established")
 
 def lambda_handler(event, context):
     ## Extract 
+    logger.info("Begin extraction")
     # Read files from S3 using helper functions
-    allplayers = read_s3_json("fnfl2024", "sleeper/test_reads3.json")
+    allplayers = read_s3_json("fnfl2024", "sleeper/allplayers.json")
+    logger.info("Extracted allplayers.json")
     ids = read_s3_csv("fnfl2024", "lu_ids.csv")
     ourlads = read_s3_csv("fnfl2024", "ourlads.csv")
     sharks = read_s3_csv("fnfl2024", "sharks.csv")
@@ -49,6 +51,12 @@ def lambda_handler(event, context):
     allplayers = allplayers.reset_index(names='id_sleeper')
     # Filter out inactive players
     allplayers = allplayers.loc[allplayers['status']!="Inactive"]
+    # Create a full name for the Defenses
+    allplayers.loc[allplayers['position']=="DEF", 'full_name'] = allplayers.loc[
+        allplayers['position']=="DEF", 'first_name'
+        ] + " " + allplayers.loc[
+            allplayers['position']=="DEF", 'last_name'
+            ]
     # Select only relevant columns
     allplayers = allplayers[[
         'id_sleeper',
@@ -153,6 +161,7 @@ def lambda_handler(event, context):
         'XPA','FGA', 
         'Punts','Punt Yds', 'Punts Inside 20', 
         'Yds Allowed', 'Pts Agn', 
+        'Rush and Rec Yds'
     ])
     # Set to zero predictions which sharks lacks but sleeper has
     for colName in [
@@ -167,6 +176,14 @@ def lambda_handler(event, context):
         predictions[colName] = predictions[colName].astype('float64')
     # Set NA values to zero
     predictions = predictions.fillna(0)
+    # Move a couple of the defensive int and fumble scores to the proper column
+    defensive_ids = [
+        'MIN','KC','DEN','CIN','CHI','TEN','NYG','SF','PHI','BUF','DET','MIA','GB','NO','LAR','JAX','CAR','ATL','CLE','TB','LAC','WAS','DAL','NYJ','LV','SEA','ARI','IND','PIT','BAL','NE','HOU',
+    ]
+    predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'int'] = predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'pass_int']
+    predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'pass_int'] = 0
+    predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'fum'] = predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'fum_lost']
+    predictions.loc[predictions['id_sleeper'].isin(defensive_ids), 'fum_lost'] = 0
     # Tidy up columns
     predictions = predictions[[
         'index_predictions', 'id_sleeper', 'week_of_season', 'pass_cmp', 'pass_yd',
@@ -180,7 +197,7 @@ def lambda_handler(event, context):
         'yds_allow_450_499', 'yds_allow_500_549', 'yds_allow_550p',
         'bonus_rush_yd_100', 'bonus_rush_yd_200', 'bonus_rec_yd_100',
         'bonus_rec_yd_200', 'bonus_pass_yd_300', 'bonus_pass_yd_400',
-        'Rush and Rec Yds', 'bonus_rush_rec_yd_200', 'pass_2pt', 'rush_2pt',
+        'bonus_rush_rec_yd_200', 'pass_2pt', 'rush_2pt',
         'rec_2pt', 'xpmiss', 'int', 'fum_rec', 'blk_kick', 'ff', 'def_st_ff',
         'def_st_fum_rec', 'def_td', 'def_3_and_out', 'def_2pt', 'st_fum_rec',
         'st_ff', 'st_td', 'fum', 'fum_rec_td'
@@ -205,7 +222,7 @@ def lambda_handler(event, context):
         'yds_allow_450_499', 'yds_allow_500_549', 'yds_allow_550p',
         'bonus_rush_yd_100', 'bonus_rush_yd_200', 'bonus_rec_yd_100',
         'bonus_rec_yd_200', 'bonus_pass_yd_300', 'bonus_pass_yd_400',
-        'Rush and Rec Yds', 'bonus_rush_rec_yd_200', 'pass_2pt', 'rush_2pt',
+        'bonus_rush_rec_yd_200', 'pass_2pt', 'rush_2pt',
         'rec_2pt', 'xpmiss', 'int', 'fum_rec', 'blk_kick', 'ff', 'def_st_ff',
         'def_st_fum_rec', 'def_td', 'def_3_and_out', 'def_2pt', 'st_fum_rec',
         'st_ff', 'st_td', 'fum', 'fum_rec_td'
@@ -226,7 +243,6 @@ def lambda_handler(event, context):
         sys.exit(1)
     # Write predictions df to the RDS
     try:
-        predictions = predictions.head()
         predictions.to_sql(name='predictions', con=engine, if_exists = 'replace', index=False)
         logger.info("Loaded predictions df to MySQL instance")
     except Exception as e:
