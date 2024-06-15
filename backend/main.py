@@ -1,6 +1,9 @@
 from fastapi import FastAPI
+from mangum import Mangum
+from sleeperpy import User, Leagues
 
 app = FastAPI()
+handler = Mangum(app)
 
 @app.get('/')
 def read_root():
@@ -9,6 +12,7 @@ def read_root():
 
 @app.get('/player_predictions')
 def fetch_player_predictions():
+    
     player_predictions = {
         '1':{
             "franchise_name":"Travis' franchise", "is_user_franchise":"True", "id_sleeper": {

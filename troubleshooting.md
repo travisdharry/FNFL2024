@@ -25,3 +25,12 @@
 ### Function
 
 
+## Lambda FastAPI to serve data from RDS
+### Trigger:
+### Networking
+### Permissions
+### Deployment
+pip install -r requirements.txt --platform manylinux2014_x86_64 --target ./python --only-binary=:all:
+(cd python; zip ../lambda_function.zip -r .)
+zip lambda_function.zip -u main.py
+### Function
