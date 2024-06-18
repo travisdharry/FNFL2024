@@ -13,6 +13,7 @@
 - Need to create a RDS proxy endpoint because Lambda functions which are elastic can quickly overwhelm an RDS server with limited elasticity. The proxy endpoint throttles the Lambda requests to RDS.
 ### Permissions
 - Needs LambdaExecution Role
+- Both RDS proxy and Lambda need to be in the same VPC and need to have the correct rdsproxy-lambda Security Groups assigned
 ### Function
 
 
@@ -29,6 +30,7 @@
 ### Trigger:
 ### Networking
 ### Permissions
+- Both RDS proxy and Lambda need to be in the same VPC and need to have the correct rdsproxy-lambda Security Groups assigned
 ### Deployment
 pip install -r requirements.txt --platform manylinux2014_x86_64 --target ./python --only-binary=:all:
 (cd python; zip ../lambda_function.zip -r .)
