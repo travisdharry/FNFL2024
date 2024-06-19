@@ -2,6 +2,8 @@
 ### References:
 GokceDB-1: https://www.youtube.com/watch?v=Z3dMhPxbuG0
 AWSTutorial-1: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-lambda-tutorial.html
+EC2Flask-1: https://medium.com/techfront/step-by-step-visual-guide-on-deploying-a-flask-application-on-aws-ec2-8e3e8b82c4f7
+EC2Access-1: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html
 
 ## VPC
 Creation:
@@ -73,9 +75,6 @@ Trigger
 
 
 
-
-
-
 ## Backend API Lambda
 Creation:
 - Enable Function URL
@@ -98,3 +97,50 @@ Deployment:
 - Upload zip file to Lambda from S3
 
 
+
+
+## Frontend EC2
+Creation:
+- Specify Ubuntu
+- Allow SSH, HTTP, HTTPS
+- Save .pem key-value-pair in a folder
+Setup:
+- Log in via SSH in terminal
+`$ ssh -i <your key name>.pem ubuntu@<Public DNS of your EC2>`
+`$ chmod 400 <your key name>.pem`
+- Install Python venv
+`$ sudo apt-get update`
+`$ sudo apt-get install python3-venv`
+- Create directory
+`$ mkdir fnfl24c`
+`$ cd fnfl24c`
+- Create the virtual environment
+`$ python3 -m venv venv`
+- Activate the virtual environment
+`$ source venv/bin/activate`
+- Install Flask
+`$ pip install Flask`
+- Upload app contents
+`$ sudo nano app.py` (There may be a better way to do this)
+- Verify app works
+`$ python app.py`
+- Install & run gunicorn
+`$ pip install gunicorn`
+`$ gunicorn -b 0.0.0.0:8000 app:app`
+- Use systemd to manage Gunicorn
+`$ sudo nano /etc/systemd/system/helloworld.service`
+```
+[Unit]
+Description=Gunicorn instance
+After=network.target
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/fnfl24c
+ExecStart=/home/ubuntu/fnfl24c/venv/bin/gunicorn -b localhost:8000 app:app
+Restart=always
+[Install]
+WantedBy=multi-user.target
+```
+- Continue following EC2Flask-1
+Except `sudo apt-get install nginx`
