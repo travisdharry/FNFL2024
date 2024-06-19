@@ -46,7 +46,6 @@ def fetch_waiver_wire(user_id: str, league_id: str):
         # Receive user ID & league ID in GET request, then fetch league data from Sleeper API
         selected_league = Leagues.get_league(league_id)
         logger.info("Connected to Sleeper once")
-        roster_positions = selected_league['roster_positions']
         scoring_settings = selected_league['scoring_settings']
         # Get the rosters for the league
         rosters = Leagues.get_rosters(league_id)
@@ -112,6 +111,7 @@ def fetch_waiver_wire(user_id: str, league_id: str):
         complete.loc[complete['owner_id'].isnull(), 'team_name'] = 'Free Agents'
         complete.loc[complete['owner_id'].isnull(), 'owner_name'] = 'Free Agents'
         complete = complete.fillna("")
+        complete = complete.drop_duplicates(subset=['id_sleeper', 'week_of_season'], keep='first', ignore_index=True)
 
         # Convert the dataframe to json
         logger.info("Returning results")
