@@ -217,7 +217,7 @@ def fetch_waiver_wire(user_id: str, league_id: str):
                     # Loop through the franchises
                     for franchise in franchise_comparison['owner_name'].unique():
                         # Get the players for the current franchise, week, and roster position
-                        players = franchise_comparison[(franchise_comparison['owner_name'] == franchise) & (franchise_comparison['week_of_season'] == week) & (franchise_comparison['position'].isin(rosterDict[roster_position]))]
+                        players = franchise_comparison[(franchise_comparison['starter'] == False) & (franchise_comparison['owner_name'] == franchise) & (franchise_comparison['week_of_season'] == week) & (franchise_comparison['position'].isin(rosterDict[roster_position]))]
                         # Check that the number of players is greater than 0
                         if len(players) > 0:
                             # Get the player with the highest predicted fantasy points
@@ -229,6 +229,8 @@ def fetch_waiver_wire(user_id: str, league_id: str):
         franchise_comparison = franchise_comparison.fillna("")
         # Filter out players who are starters
         franchise_comparison = franchise_comparison[franchise_comparison['starter'] == True]
+        # Drop duplicates
+        franchise_comparison = franchise_comparison.drop_duplicates(subset=['id_sleeper', 'week_of_season'], keep='first', ignore_index=True)
 
         # Convert the dataframe to json
         logger.info("Returning results")
