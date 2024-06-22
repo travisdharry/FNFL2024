@@ -167,18 +167,22 @@ def fetch_waiver_wire(user_id: str, league_id: str):
             ''',
             con=engine
         )
+        logger.info(f"Length of players Point1: {len(players)}")
         predictions = pd.read_sql(
             '''
             SELECT * from predictions
             ''',
             con=engine
         )
+        logger.info(f"Length of predictions Point2: {len(predictions)}")
         logger.info("Performing transformations on database results")
         # Get a list of rostered players 
         rostered_players = roster_df['id_sleeper'].tolist()
         # Filter the predictions to only include players on the user's roster or on waivers
         predictions = predictions.loc[predictions['id_sleeper'].isin(rostered_players)]
+        logger.info(f"Length of predictions Point3: {len(predictions)}")
         predictions = predictions.merge(players, on='id_sleeper', how='left')
+        logger.info(f"Length of predictions Point4: {len(predictions)}")
 
         # Multiply each prediction column by the corresponding scoring setting
         for column in predictions.columns:
@@ -192,6 +196,7 @@ def fetch_waiver_wire(user_id: str, league_id: str):
 
         # Merge the predictions with the roster_df to get the owner_name and team_name for each player
         franchise_comparison = pd.merge(predictions, roster_df, on='id_sleeper', how='left')
+        logger.info(f"Length of franchise_comparison Point1: {len(franchise_comparison)}")
  
         # Find which players have any value
         # Initialize a dictionary describing each of the roster positions
@@ -230,7 +235,9 @@ def fetch_waiver_wire(user_id: str, league_id: str):
         # Filter out players who are starters
         franchise_comparison = franchise_comparison[franchise_comparison['starter'] == True]
         # Drop duplicates
+        logger.info(f"Length of franchise_comparison Point2: {len(franchise_comparison)}")
         franchise_comparison = franchise_comparison.drop_duplicates(subset=['id_sleeper', 'week_of_season'], keep='first', ignore_index=True)
+        logger.info(f"Length of franchise_comparison Point3: {len(franchise_comparison)}")
 
         # Convert the dataframe to json
         logger.info("Returning results")
