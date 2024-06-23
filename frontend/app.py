@@ -73,10 +73,12 @@ def waiver_wire():
 def franchise_comparison():
     user_id = session.get("user_id")
     league_id = session.get("league_id")
+    # Fetch data from backend API
     backendapi_franchisecomparison_url = f'https://ygn5at2pt5zgycacip4t6kvrey0ayfrl.lambda-url.us-east-2.on.aws//franchise_comparison/{user_id}/{league_id}'
-    response = requests.get(backendapi_franchisecomparison_url).json()
+    response = requests.get(backendapi_franchisecomparison_url)
     # Parse the data
-    backend_response = pd.DataFrame(response)
+    response_json = response.json()
+    backend_response = pd.DataFrame(response_json)
     # Set datatypes
     backend_response['id_sleeper'] = backend_response['id_sleeper'].astype(str)
     backend_response['team_name'] = backend_response['team_name'].astype(str)
@@ -140,7 +142,7 @@ def franchise_comparison():
                 )
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template('compareFranchises.html', graphJSON=graphJSON)
-    #return render_template("waiverWire.html", tables=[backend_response.to_html(classes='data')], titles=backend_response.columns.values)
+  
 
 if __name__ == "__main__":
 	app.run()
