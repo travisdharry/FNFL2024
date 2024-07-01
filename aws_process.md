@@ -121,7 +121,8 @@ Setup:
 - Install Flask
 `$ pip install Flask`
 - Upload app contents
-`$ sudo nano app.py` (There may be a better way to do this)
+`$ sudo nano app.py` (To edit the text in nano editor)
+`scp -i /path/key-pair-name.pem /absolutepath/my-file.txt ec2-user@instance-public-dns-name:path/` (To upload a new file)
 - Verify app works
 `$ python app.py`
 - Install & run gunicorn
